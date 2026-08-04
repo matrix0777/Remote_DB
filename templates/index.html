@@ -3,91 +3,273 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Team Workspace</title>
+    <title>AI Remote Team Workspace Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
-<body class="bg-slate-100 min-h-screen">
+<body class="bg-slate-100 min-h-screen flex flex-col font-sans">
 
-    <!-- Header -->
-    <nav class="p-6 flex justify-between items-center max-w-7xl mx-auto">
-        <h1 class="text-2xl font-bold text-slate-800">Team Workspace</h1>
-        <button onclick="logout()" class="text-red-500 font-medium hover:underline">Log Out</button>
+    <!-- Header Navigation -->
+    <nav class="p-6 flex justify-between items-center max-w-7xl w-full mx-auto border-b border-slate-200/60 mb-6 bg-white/70 backdrop-blur-md sticky top-0 z-30 shadow-xs">
+        <div class="flex items-center gap-3">
+            <div class="bg-indigo-600 text-white p-2 rounded-xl font-bold flex items-center justify-center shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-slate-800 tracking-tight">Remote Team Workspace</h1>
+                <p class="text-xs text-slate-500">AI-Powered Collaboration & Database Platform</p>
+            </div>
+            <span id="userRoleBadge" class="hidden text-xs font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider bg-slate-200 text-slate-700 ml-2 shadow-2xs"></span>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="text-right hidden sm:block">
+                <span id="userNameDisplay" class="block text-sm font-semibold text-slate-700"></span>
+                <span id="userTeamDisplay" class="block text-[11px] text-slate-400">Workspace Member</span>
+            </div>
+            <button onclick="logout()" class="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 px-3 py-1.5 rounded-lg text-sm font-medium transition shadow-2xs">Log Out</button>
+        </div>
     </nav>
 
-    <!-- Workspace Grid -->
-    <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-6 pb-12">
-
-        <!-- Left: Forms and Table -->
-        <div class="lg:col-span-2 space-y-6">
-
-            <!-- Admin-Only Add Teammate Card -->
-            <div id="addTeammateCard" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hidden">
-                <h2 class="text-lg font-semibold text-slate-800 mb-4">Add Teammate</h2>
-                <form id="userForm" onsubmit="handleAddUser(event)" class="flex gap-3">
-                    <input type="text" id="newUsername" placeholder="Username" class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-blue-500" required>
-                    <input type="password" id="newPassword" placeholder="Password" class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-blue-500" required>
-                    <select id="newRole" class="border rounded-lg px-3 py-2 text-sm">
-                        <option value="user">User</option>
-                        <option value="admin">Admin</option>
-                    </select>
-                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700">Add User</button>
-                </form>
+    <!-- Quick Insights: MySQL Database Views -->
+    <div class="max-w-7xl w-full mx-auto px-6 mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-white p-5 rounded-2xl shadow-xs border border-slate-200 hover:border-slate-300 transition">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-indigo-500"></span> Team Workload Distribution
+                </h3>
+                <span class="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded font-mono font-medium border border-indigo-100">v_team_workload</span>
             </div>
-
-            <!-- Add Project Form -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-lg font-semibold text-slate-800 mb-4">Add Record</h2>
-                <form id="recordForm" onsubmit="handleAddRecord(event)" class="flex gap-3">
-                    <input type="text" id="projName" placeholder="Project Name" class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-blue-500" required>
-                    <select id="projStatus" class="border rounded-lg px-3 py-2 text-sm">
-                        <option value="Planning">Planning</option>
-                        <option value="Active">Active</option>
-                        <option value="Completed">Completed</option>
-                    </select>
-                    <input type="number" step="0.01" id="projBudget" placeholder="Budget" class="w-32 border rounded-lg px-3 py-2 text-sm focus:outline-blue-500" required>
-                    <button type="submit" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700">Save</button>
-                </form>
-            </div>
-
-            <!-- Database Projects Table -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <table class="w-full text-left text-sm text-slate-600">
-                    <thead class="bg-slate-50 text-slate-700 border-b">
-                        <tr>
-                            <th class="p-4">ID</th>
-                            <th class="p-4">Project Name</th>
-                            <th class="p-4">Status</th>
-                            <th class="p-4">Budget</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                        <tr><td colspan="4" class="p-4 text-center text-slate-400">Loading records...</td></tr>
-                    </tbody>
-                </table>
-            </div>
+            <div id="workloadStats" class="text-xs text-slate-600 space-y-1.5 max-h-[120px] overflow-y-auto pr-1">Loading workload view...</div>
         </div>
 
-        <!-- Right: AI Conversational Chatbot -->
-        <div class="bg-indigo-900 text-white p-6 rounded-2xl shadow-lg flex flex-col justify-between h-[620px]">
-            <div>
-                <div class="flex items-center gap-2 mb-4">
-                    <span class="text-xl">✨</span>
-                    <h2 class="text-lg font-bold">AI Conversational Assistant</h2>
+        <div class="bg-white p-5 rounded-2xl shadow-xs border border-slate-200 hover:border-slate-300 transition">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-amber-600 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span> Overdue Tasks Alert
+                </h3>
+                <span class="text-[10px] bg-amber-50 text-amber-600 px-2 py-0.5 rounded font-mono font-medium border border-amber-100">v_overdue_tasks</span>
+            </div>
+            <div id="overdueStats" class="text-xs text-slate-600 space-y-1.5 max-h-[120px] overflow-y-auto pr-1">Loading overdue tasks...</div>
+        </div>
+    </div>
+
+    <!-- Main Workspace Layout -->
+    <div class="max-w-7xl w-full mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-6 pb-12 flex-1">
+
+        <!-- Left 2 Columns: Management Tables & Forms -->
+        <div class="lg:col-span-2 space-y-6">
+
+            <!-- Tab Navigation Buttons -->
+            <div class="flex border-b border-slate-200 gap-2 bg-white px-4 pt-3 rounded-t-2xl shadow-xs">
+                <button onclick="switchTab('projects')" id="tabBtn-projects" class="px-4 py-2.5 text-sm font-semibold border-b-2 border-indigo-600 text-indigo-600 transition flex items-center gap-1.5">Projects</button>
+                <button onclick="switchTab('tasks')" id="tabBtn-tasks" class="px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition flex items-center gap-1.5">Tasks</button>
+                <button onclick="switchTab('teams')" id="tabBtn-teams" class="px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition flex items-center gap-1.5">Teams</button>
+                <button onclick="switchTab('users')" id="tabBtn-users" class="px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition hidden items-center gap-1.5">Teammates</button>
+            </div>
+
+            <!-- TAB 1: PROJECTS MANAGEMENT -->
+            <div id="tab-projects" class="space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200">
+                    <h2 class="text-md font-bold text-slate-800 mb-4 flex items-center gap-2">Add New Project</h2>
+                    <form onsubmit="handleCreateProject(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <input type="text" id="projName" placeholder="Project Name" class="border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" required>
+                        <select id="projStatus" class="border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                            <option value="Planning">Planning</option>
+                            <option value="Active">Active</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                        <input type="number" step="0.01" id="projBudget" placeholder="Budget ($)" class="border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition" required>
+                        <select id="projTeamId" class="border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                            <option value="">-- Assign Team (Optional) --</option>
+                        </select>
+                        <button type="submit" class="sm:col-span-2 bg-emerald-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-emerald-700 transition shadow-sm">Save Project</button>
+                    </form>
                 </div>
 
-                <div id="chatBox" class="space-y-4 overflow-y-auto max-h-[470px] pr-2">
-                    <div class="bg-indigo-800/60 p-3 rounded-lg text-xs text-indigo-200">
-                        Hello! Ask me questions or issue actions like:<br>
-                        • <i>"How many users do we have?"</i><br>
-                        • <i>"Create project Titan with budget 85000"</i><br>
-                        • <i>"Add user Alex with password pass123 as admin"</i>
+                <div class="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Active Projects</h3>
+                        <button onclick="fetchProjects()" class="text-indigo-600 hover:text-indigo-800 text-xs font-semibold">Refresh</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-600">
+                            <thead class="bg-slate-50 text-slate-700 border-b border-slate-200 text-xs uppercase tracking-wider">
+                                <tr>
+                                    <th class="p-4">ID</th>
+                                    <th class="p-4">Project Name</th>
+                                    <th class="p-4">Status</th>
+                                    <th class="p-4">Budget</th>
+                                    <th class="p-4">Team ID</th>
+                                </tr>
+                            </thead>
+                            <tbody id="projectsTableBody">
+                                <tr><td colspan="5" class="p-6 text-center text-slate-400">Loading projects...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
-            <form id="chatForm" onsubmit="handleChatSubmit(event)" class="mt-4 flex gap-2">
-                <input type="text" id="chatInput" placeholder="Ask or command AI..." class="flex-1 bg-white text-slate-800 px-3 py-2 rounded-lg text-sm focus:outline-none" required>
-                <button type="submit" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg text-sm font-medium">Send</button>
+            <!-- TAB 2: TASKS MANAGEMENT -->
+            <div id="tab-tasks" class="space-y-6 hidden">
+                <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200">
+                    <h2 class="text-md font-bold text-slate-800 mb-4">Create Task Assignment</h2>
+                    <form onsubmit="handleCreateTask(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <input type="text" id="taskTitle" placeholder="Task Title & Objective" class="sm:col-span-2 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition" required>
+                        <select id="taskProjectId" class="border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm outline-none bg-white" required>
+                            <option value="">-- Select Project --</option>
+                        </select>
+                        <select id="taskAssigneeId" class="border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm outline-none bg-white">
+                            <option value="">-- Assign Teammate --</option>
+                        </select>
+                        <select id="taskPriority" class="border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm outline-none bg-white">
+                            <option value="low">Low Priority</option>
+                            <option value="medium" selected>Medium Priority</option>
+                            <option value="high">High Priority</option>
+                        </select>
+                        <input type="datetime-local" id="taskDueDate" class="border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm outline-none bg-white">
+                        <button type="submit" class="sm:col-span-2 bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition shadow-sm">Save & Dispatch Task</button>
+                    </form>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Workspace Tasks</h3>
+                        <button onclick="fetchTasks()" class="text-indigo-600 hover:text-indigo-800 text-xs font-semibold">Refresh</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-600">
+                            <thead class="bg-slate-50 text-slate-700 border-b border-slate-200 text-xs uppercase tracking-wider">
+                                <tr>
+                                    <th class="p-4">ID</th>
+                                    <th class="p-4">Task Title</th>
+                                    <th class="p-4">Status</th>
+                                    <th class="p-4">Priority</th>
+                                    <th class="p-4">Assignee</th>
+                                    <th class="p-4">Due Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tasksTableBody">
+                                <tr><td colspan="6" class="p-6 text-center text-slate-400">Loading tasks...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: TEAMS MANAGEMENT -->
+            <div id="tab-teams" class="space-y-6 hidden">
+                <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200">
+                    <h2 class="text-md font-bold text-slate-800 mb-4">Create Collaboration Team</h2>
+                    <form onsubmit="handleCreateTeam(event)" class="flex gap-3">
+                        <input type="text" id="teamName" placeholder="Team Name (e.g. Engineering Squad)" class="flex-1 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition" required>
+                        <button type="submit" class="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition shadow-sm">Create Team</button>
+                    </form>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Active Teams</h3>
+                        <button onclick="fetchTeams()" class="text-indigo-600 hover:text-indigo-800 text-xs font-semibold">Refresh</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-600">
+                            <thead class="bg-slate-50 text-slate-700 border-b border-slate-200 text-xs uppercase tracking-wider">
+                                <tr>
+                                    <th class="p-4">ID</th>
+                                    <th class="p-4">Team Name</th>
+                                    <th class="p-4">Created By (User ID)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="teamsTableBody">
+                                <tr><td colspan="3" class="p-6 text-center text-slate-400">Loading teams...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: USERS MANAGEMENT (Admin Only) -->
+            <div id="tab-users" class="space-y-6 hidden">
+                <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200">
+                    <h2 class="text-md font-bold text-slate-800 mb-4">Register New Teammate (Admin)</h2>
+                    <form onsubmit="handleAddUser(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <input type="text" id="newUsername" placeholder="Username" class="border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500" required>
+                        <input type="password" id="newPassword" placeholder="Temporary Password" class="border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500" required>
+                        <select id="newRole" class="border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm outline-none bg-white">
+                            <option value="member">Member</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                        <input type="text" id="newTimezone" placeholder="Timezone (e.g. UTC, America/New_York)" value="UTC" class="border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                        <input type="text" id="newSkills" placeholder="Skills (comma separated)" class="border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                        <select id="newTeamId" class="border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm outline-none bg-white">
+                            <option value="">-- Assign Team --</option>
+                        </select>
+                        <button type="submit" class="sm:col-span-3 bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition shadow-sm mt-1">Register Teammate Account</button>
+                    </form>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Workspace Teammates</h3>
+                        <button onclick="fetchUsers()" class="text-indigo-600 hover:text-indigo-800 text-xs font-semibold">Refresh</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-600">
+                            <thead class="bg-slate-50 text-slate-700 border-b border-slate-200 text-xs uppercase tracking-wider">
+                                <tr>
+                                    <th class="p-4">ID</th>
+                                    <th class="p-4">Username</th>
+                                    <th class="p-4">Role</th>
+                                    <th class="p-4">Timezone</th>
+                                    <th class="p-4">Skills</th>
+                                    <th class="p-4">Team ID</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr><td colspan="6" class="p-6 text-center text-slate-400">Loading users...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: AI Conversational Chatbot -->
+        <div class="bg-slate-900 text-white p-6 rounded-3xl shadow-xl flex flex-col justify-between h-[710px] sticky top-24 border border-slate-800">
+            <div>
+                <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="bg-indigo-600/30 p-2 rounded-xl border border-indigo-500/30">
+                            <span class="text-lg">✨</span>
+                        </div>
+                        <div>
+                            <h2 class="text-sm font-bold text-slate-100">AI Assistant</h2>
+                            <p class="text-[11px] text-indigo-400 font-mono">Gemini-Powered Workspace Engine</p>
+                        </div>
+                    </div>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        Online
+                    </span>
+                </div>
+
+                <div id="chatBox" class="space-y-3.5 overflow-y-auto max-h-[530px] pr-2">
+                    <div class="bg-slate-800/90 p-3.5 rounded-2xl text-xs text-slate-200 leading-relaxed border border-slate-700/60 shadow-2xs">
+                        Hello! I am your AI workspace collaborator. Ask questions or run commands:<br><br>
+                        • <i>"Show me all overdue tasks"</i><br>
+                        • <i>"Create project Apollo with budget 95000"</i><br>
+                        • <i>"Reassign task 3 to user 2"</i><br>
+                        • <i>"What is the team workload distribution?"</i>
+                    </div>
+                </div>
+            </div>
+
+            <form onsubmit="handleChatSubmit(event)" class="mt-4 flex gap-2">
+                <input type="text" id="chatInput" placeholder="Ask or command AI workspace..." class="flex-1 bg-slate-800 text-slate-100 placeholder-slate-400 px-4 py-2.5 rounded-xl text-sm border border-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 outline-none transition" required>
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 px-5 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm flex items-center justify-center">Send</button>
             </form>
         </div>
     </div>
@@ -95,14 +277,22 @@
     <!-- Script Logic -->
     <script>
         const token = localStorage.getItem("token");
-
-        if (!token) {
-            window.location.href = "/login";
-        }
+        if (!token) window.location.href = "/login";
 
         function logout() {
             localStorage.removeItem("token");
             window.location.href = "/login";
+        }
+
+        function switchTab(tabName) {
+            ['projects', 'tasks', 'teams', 'users'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`tabBtn-${t}`).classList.remove('border-indigo-600', 'text-indigo-600', 'bg-white');
+                document.getElementById(`tabBtn-${t}`).classList.add('border-transparent', 'text-slate-500');
+            });
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            document.getElementById(`tabBtn-${tabName}`).classList.add('border-indigo-600', 'text-indigo-600', 'bg-white');
+            document.getElementById(`tabBtn-${tabName}`).classList.remove('border-transparent', 'text-slate-500');
         }
 
         async function checkUserProfile() {
@@ -110,139 +300,242 @@
                 const res = await fetch("/api/me", { headers: { "Authorization": `Bearer ${token}` } });
                 if (!res.ok) throw new Error("Unauthorized");
                 const user = await res.json();
+
+                document.getElementById("userNameDisplay").innerText = user.username;
+                document.getElementById("userTeamDisplay").innerText = user.team_id ? `Team ID: #${user.team_id}` : 'Independent / No Team';
+
+                const badge = document.getElementById("userRoleBadge");
+                badge.innerText = user.role;
+                badge.classList.remove("hidden");
+
                 if (user.role === "admin") {
-                    document.getElementById("addTeammateCard").classList.remove("hidden");
+                    document.getElementById("tabBtn-users").classList.remove("hidden");
                 }
             } catch (err) {
                 logout();
             }
         }
 
+        async function fetchViewsData() {
+            try {
+                const res = await fetch("/api/views/workload", { headers: { "Authorization": `Bearer ${token}` } });
+                if (res.ok) {
+                    const data = await res.json();
+                    const container = document.getElementById("workloadStats");
+                    container.innerHTML = data.length === 0 ? "No active task assignments found." : data.map(item => `
+                        <div class="flex justify-between items-center py-1.5 border-b border-slate-100 last:border-0">
+                            <span class="font-medium text-slate-700">${item.username || 'Unassigned'}</span>
+                            <span class="font-mono bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md text-[11px] font-medium">${item.assigned_tasks || item.total_tasks || 0} tasks</span>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) { console.error(err); }
+
+            try {
+                const res = await fetch("/api/views/overdue", { headers: { "Authorization": `Bearer ${token}` } });
+                if (res.ok) {
+                    const data = await res.json();
+                    const container = document.getElementById("overdueStats");
+                    container.innerHTML = data.length === 0 ? "<span class='text-emerald-600 font-medium'>🎉 All tasks are currently on schedule!</span>" : data.map(item => `
+                        <div class="flex justify-between items-center py-1.5 border-b border-slate-100 last:border-0 text-amber-700">
+                            <span class="truncate max-w-[200px] font-medium">${item.title || item.task_name}</span>
+                            <span class="font-mono text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md font-medium">Due: ${item.due_date ? new Date(item.due_date).toLocaleDateString() : 'Overdue'}</span>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        async function loadDropdownOptions() {
+            try {
+                const [pRes, uRes, tRes] = await Promise.all([
+                    fetch("/api/projects", { headers: { "Authorization": `Bearer ${token}` } }),
+                    fetch("/api/users", { headers: { "Authorization": `Bearer ${token}` } }),
+                    fetch("/api/teams", { headers: { "Authorization": `Bearer ${token}` } })
+                ]);
+
+                if (pRes.ok) {
+                    const projects = await pRes.json();
+                    const projSelect = document.getElementById("taskProjectId");
+                    projSelect.innerHTML = `<option value="">-- Select Project --</option>` + projects.map(p => `<option value="${p.id}">${p.name} (ID: ${p.id})</option>`).join('');
+                }
+
+                if (uRes.ok) {
+                    const users = await uRes.json();
+                    const userSelect = document.getElementById("taskAssigneeId");
+                    userSelect.innerHTML = `<option value="">-- Assign Teammate --</option>` + users.map(u => `<option value="${u.id}">${u.username} (ID: ${u.id})</option>`).join('');
+                }
+
+                if (tRes.ok) {
+                    const teams = await tRes.json();
+                    const teamSelects = [document.getElementById("projTeamId"), document.getElementById("newTeamId")];
+                    teamSelects.forEach(select => {
+                        if (select) {
+                            const defaultText = select.id === "projTeamId" ? "-- Assign Team (Optional) --" : "-- Assign Team --";
+                            select.innerHTML = `<option value="">${defaultText}</option>` + teams.map(t => `<option value="${t.id}">${t.name} (ID: ${t.id})</option>`).join('');
+                        }
+                    });
+                }
+            } catch (err) { console.error("Dropdown load error:", err); }
+        }
+
         async function fetchProjects() {
             try {
                 const res = await fetch("/api/projects", { headers: { "Authorization": `Bearer ${token}` } });
-                if (!res.ok) throw new Error("Failed to load records");
+                if (!res.ok) throw new Error();
                 const projects = await res.json();
-                const tbody = document.getElementById("tableBody");
-
-                if (projects.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">No records found. Use the form above to add data.</td></tr>`;
-                    return;
-                }
-
-                tbody.innerHTML = projects.map(p => `
-                    <tr class="border-b border-slate-100 hover:bg-slate-50">
-                        <td class="p-4 font-mono text-xs text-slate-500">${p.id}</td>
-                        <td class="p-4 font-medium text-slate-800">${p.name}</td>
-                        <td class="p-4">
-                            <span class="px-2 py-1 rounded-full text-xs font-semibold ${p.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}">
-                                ${p.status}
-                            </span>
-                        </td>
-                        <td class="p-4 font-mono text-slate-700">$${p.budget.toLocaleString()}</td>
+                const tbody = document.getElementById("projectsTableBody");
+                tbody.innerHTML = projects.length === 0 ? `<tr><td colspan="5" class="p-6 text-center text-slate-400">No records found.</td></tr>` : projects.map(p => `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50/80 transition">
+                        <td class="p-4 font-mono text-xs text-slate-500">#${p.id}</td>
+                        <td class="p-4 font-semibold text-slate-800">${p.name}</td>
+                        <td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${p.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}">${p.status}</span></td>
+                        <td class="p-4 font-mono text-slate-700 font-medium">$${p.budget.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                        <td class="p-4 font-mono text-slate-500">${p.team_id ? `#${p.team_id}` : 'None'}</td>
                     </tr>
                 `).join('');
-            } catch (err) {
-                console.error(err);
-            }
+            } catch (err) { console.error(err); }
         }
 
-        async function handleAddRecord(e) {
-            e.preventDefault();
-            const name = document.getElementById("projName").value;
-            const status = document.getElementById("projStatus").value;
-            const budget = parseFloat(document.getElementById("projBudget").value);
-
+        async function fetchTasks() {
             try {
-                const res = await fetch("/api/projects", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-                    body: JSON.stringify({ name, status, budget })
-                });
+                const res = await fetch("/api/tasks", { headers: { "Authorization": `Bearer ${token}` } });
+                if (!res.ok) throw new Error();
+                const tasks = await res.json();
+                const tbody = document.getElementById("tasksTableBody");
+                tbody.innerHTML = tasks.length === 0 ? `<tr><td colspan="6" class="p-6 text-center text-slate-400">No tasks found.</td></tr>` : tasks.map(t => `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50/80 transition">
+                        <td class="p-4 font-mono text-xs text-slate-500">#${t.id}</td>
+                        <td class="p-4 font-semibold text-slate-800">${t.title}</td>
+                        <td class="p-4"><span class="px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700">${t.status}</span></td>
+                        <td class="p-4 capitalize text-xs font-medium"><span class="px-2 py-0.5 rounded ${t.priority === 'high' ? 'bg-red-50 text-red-700' : t.priority === 'medium' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-700'}">${t.priority}</span></td>
+                        <td class="p-4 font-mono text-xs text-slate-600">${t.assigned_to_id ? `#${t.assigned_to_id}` : 'Unassigned'}</td>
+                        <td class="p-4 text-xs font-mono text-slate-500">${t.due_date ? new Date(t.due_date).toLocaleDateString() : 'None'}</td>
+                    </tr>
+                `).join('');
+            } catch (err) { console.error(err); }
+        }
 
-                if (!res.ok) throw new Error("Failed to create project");
-                document.getElementById("recordForm").reset();
-                fetchProjects();
-            } catch (err) {
-                alert(`Error: ${err.message}`);
-            }
+        async function fetchTeams() {
+            try {
+                const res = await fetch("/api/teams", { headers: { "Authorization": `Bearer ${token}` } });
+                if (!res.ok) throw new Error();
+                const teams = await res.json();
+                const tbody = document.getElementById("teamsTableBody");
+                tbody.innerHTML = teams.length === 0 ? `<tr><td colspan="3" class="p-6 text-center text-slate-400">No teams found.</td></tr>` : teams.map(t => `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50/80 transition">
+                        <td class="p-4 font-mono text-xs text-slate-500">#${t.id}</td>
+                        <td class="p-4 font-semibold text-slate-800">${t.name}</td>
+                        <td class="p-4 font-mono text-xs text-slate-500">${t.created_by ? `#${t.created_by}` : 'System'}</td>
+                    </tr>
+                `).join('');
+            } catch (err) { console.error(err); }
+        }
+
+        async function fetchUsers() {
+            try {
+                const res = await fetch("/api/users", { headers: { "Authorization": `Bearer ${token}` } });
+                if (!res.ok) throw new Error();
+                const users = await res.json();
+                const tbody = document.getElementById("usersTableBody");
+                tbody.innerHTML = users.length === 0 ? `<tr><td colspan="6" class="p-6 text-center text-slate-400">No users found.</td></tr>` : users.map(u => `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50/80 transition">
+                        <td class="p-4 font-mono text-xs text-slate-500">#${u.id}</td>
+                        <td class="p-4 font-semibold text-slate-800">${u.username}</td>
+                        <td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${u.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'}">${u.role}</span></td>
+                        <td class="p-4 font-mono text-xs text-slate-500">${u.timezone || 'UTC'}</td>
+                        <td class="p-4 text-xs text-slate-600">${u.skills || 'None'}</td>
+                        <td class="p-4 font-mono text-xs text-slate-500">${u.team_id ? `#${u.team_id}` : 'None'}</td>
+                    </tr>
+                `).join('');
+            } catch (err) { console.error(err); }
+        }
+
+        async function handleCreateProject(e) {
+            e.preventDefault();
+            const body = {
+                name: document.getElementById("projName").value,
+                status: document.getElementById("projStatus").value,
+                budget: parseFloat(document.getElementById("projBudget").value),
+                team_id: document.getElementById("projTeamId").value ? parseInt(document.getElementById("projTeamId").value) : null
+            };
+            const res = await fetch("/api/projects", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, body: JSON.stringify(body) });
+            if (res.ok) { e.target.reset(); refreshAllData(); } else { const err = await res.json(); alert(err.detail || "Failed to save project."); }
+        }
+
+        async function handleCreateTask(e) {
+            e.preventDefault();
+            const body = {
+                title: document.getElementById("taskTitle").value,
+                project_id: parseInt(document.getElementById("taskProjectId").value),
+                assigned_to_id: document.getElementById("taskAssigneeId").value ? parseInt(document.getElementById("taskAssigneeId").value) : null,
+                priority: document.getElementById("taskPriority").value,
+                due_date: document.getElementById("taskDueDate").value ? new Date(document.getElementById("taskDueDate").value).toISOString() : null
+            };
+            const res = await fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, body: JSON.stringify(body) });
+            if (res.ok) { e.target.reset(); refreshAllData(); } else { const err = await res.json(); alert(err.detail || "Failed to create task."); }
+        }
+
+        async function handleCreateTeam(e) {
+            e.preventDefault();
+            const name = document.getElementById("teamName").value;
+            const res = await fetch("/api/teams", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, body: JSON.stringify({ name }) });
+            if (res.ok) { e.target.reset(); refreshAllData(); } else { const err = await res.json(); alert(err.detail || "Failed to create team."); }
         }
 
         async function handleAddUser(e) {
             e.preventDefault();
-            const username = document.getElementById("newUsername").value;
-            const password = document.getElementById("newPassword").value;
-            const role = document.getElementById("newRole").value;
-
-            try {
-                const res = await fetch("/api/users", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-                    body: JSON.stringify({ username, password, role })
-                });
-
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || "Failed to add user");
-
-                alert(`Teammate '${data.username}' added successfully!`);
-                document.getElementById("userForm").reset();
-            } catch (err) {
-                alert(`Error: ${err.message}`);
-            }
+            const body = {
+                username: document.getElementById("newUsername").value,
+                password: document.getElementById("newPassword").value,
+                role: document.getElementById("newRole").value,
+                timezone: document.getElementById("newTimezone").value || "UTC",
+                skills: document.getElementById("newSkills").value || null,
+                team_id: document.getElementById("newTeamId").value ? parseInt(document.getElementById("newTeamId").value) : null
+            };
+            const res = await fetch("/api/users", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, body: JSON.stringify(body) });
+            if (res.ok) { e.target.reset(); refreshAllData(); alert("Teammate account registered successfully!"); } else { const err = await res.json(); alert(err.detail || "Failed to add user."); }
         }
 
-        // Conversational AI Chat Handling
         async function handleChatSubmit(e) {
             e.preventDefault();
             const input = document.getElementById("chatInput");
             const chatBox = document.getElementById("chatBox");
             const prompt = input.value.trim();
-
             if (!prompt) return;
 
-            // Render User Message
-            chatBox.innerHTML += `
-                <div class="flex justify-end">
-                    <div class="bg-blue-600 text-white p-3 rounded-lg text-xs max-w-[85%]">${prompt}</div>
-                </div>
-            `;
+            chatBox.innerHTML += `<div class="flex justify-end"><div class="bg-indigo-600 text-white p-3.5 rounded-2xl text-xs max-w-[85%] shadow-xs">${prompt}</div></div>`;
             input.value = "";
+            chatBox.scrollTop = chatBox.scrollHeight;
 
             try {
-                const res = await fetch("/api/query", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-                    body: JSON.stringify({ prompt: prompt })
-                });
-
+                const res = await fetch("/api/query", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, body: JSON.stringify({ prompt }) });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.detail || "Query execution failed");
 
-                // If a project was created via chat, refresh table automatically
-                if (data.refresh_table) {
-                    fetchProjects();
-                }
+                if (data.refresh_table) refreshAllData();
 
-                // Render Conversational Answer + Collapsible SQL snippet
-                let sqlSnippet = data.sql ? `<div class="text-[10px] text-indigo-300 font-mono mt-2 border-t border-indigo-700/50 pt-1">Executed SQL: ${data.sql}</div>` : '';
+                const parsedReply = window.marked ? marked.parse(data.reply) : data.reply;
+                const sqlSnippet = data.sql ? `<div class="text-[10px] text-indigo-300/80 font-mono mt-2.5 border-t border-slate-700/80 pt-2 flex items-center justify-between"><span>Executed SQL/Procedure:</span><span class="truncate max-w-[200px] text-indigo-200">${data.sql}</span></div>` : '';
 
-                chatBox.innerHTML += `
-                    <div class="bg-indigo-800/80 p-3 rounded-lg text-xs text-indigo-100 border border-indigo-700 space-y-1">
-                        <div>${data.reply.replace(/\n/g, '<br>')}</div>
-                        ${sqlSnippet}
-                    </div>
-                `;
+                chatBox.innerHTML += `<div class="bg-slate-800/90 p-4 rounded-2xl text-xs text-slate-100 border border-slate-700/80 space-y-2 shadow-xs"><div>${parsedReply}</div>${sqlSnippet}</div>`;
             } catch (err) {
-                chatBox.innerHTML += `
-                    <div class="bg-red-900/60 text-red-200 p-3 rounded-lg text-xs">Error: ${err.message}</div>
-                `;
+                chatBox.innerHTML += `<div class="bg-red-950/80 text-red-200 p-3.5 rounded-2xl text-xs border border-red-900">Error: ${err.message}</div>`;
             }
-
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
+        function refreshAllData() {
+            fetchProjects();
+            fetchTasks();
+            fetchTeams();
+            fetchUsers();
+            fetchViewsData();
+            loadDropdownOptions();
+        }
+
         checkUserProfile();
-        fetchProjects();
+        refreshAllData();
     </script>
 </body>
 </html>

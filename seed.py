@@ -1,32 +1,29 @@
-from database import SessionLocal
-from models import User
-from main import get_password_hash
+from database import SessionLocal, engine, Base
+import models
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# Create tables if they don't exist
+Base.metadata.create_all(bind=engine)
 
 db = SessionLocal()
 
-try:
-    # Check if admin already exists
-    admin_user = db.query(User).filter(User.username == "admin").first()
+# Check if admin already exists
+existing_admin = db.query(models.User).filter(models.User.username == "admin").first()
 
-    if not admin_user:
-        # Create default admin user
-        hashed_pwd = get_password_hash("admin")
+if not existing_admin:
+    admin_user = models.User(
+        username="admin",
+        hashed_password=pwd_context.hash("admin123"),  # Change password as needed
+        role="admin"
+    )
+    db.add(admin_user)
+    db.commit()
+    print("✅ Initial admin account created successfully!")
+    print("   Username: admin")
+    print("   Password: admin123")
+else:
+    print("⚠️ Admin account already exists.")
 
-        # Check your models.py field name: 'hashed_password' or 'password_hash'
-        new_admin = User(
-            username="admin",
-            hashed_password=hashed_pwd,
-            role="admin"
-        )
-        db.add(new_admin)
-        db.commit()
-        print("Admin user created successfully!")
-    else:
-        print("Admin user already exists in the database.")
-
-except Exception as e:
-    db.rollback()
-    print(f"Error creating admin user: {e}")
-
-finally:
-    db.close()
+db.close()

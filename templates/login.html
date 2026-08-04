@@ -6,72 +6,71 @@
     <title>Login - Team Workspace</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+<body class="bg-slate-100 min-h-screen flex items-center justify-center font-sans">
 
-    <div class="bg-white p-8 rounded-2xl shadow-md border border-slate-200 w-full max-w-md">
-        <!-- Page Header -->
-        <div class="text-center mb-6">
-            <h1 class="text-2xl font-bold text-slate-800">Team Workspace</h1>
-            <p class="text-slate-500 text-sm mt-1">Sign in to access your dashboard</p>
+    <div class="max-w-md w-full mx-4">
+        <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-200">
+
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div class="bg-indigo-600 text-white w-12 h-12 rounded-2xl mx-auto flex items-center justify-center font-bold text-xl shadow-md mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Team Workspace</h1>
+                <p class="text-xs text-slate-500 mt-1">Sign in to access your dashboard</p>
+            </div>
+
+            <!-- Error Banner -->
+            <div id="errorBanner" class="hidden mb-6 p-3.5 bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl font-medium text-center"></div>
+
+            <!-- Login Form -->
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Username</label>
+                    <input type="text" id="username" placeholder="Enter username" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" required>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Password</label>
+                    <input type="password" id="password" placeholder="••••••••" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" required>
+                </div>
+
+                <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl text-sm font-semibold transition shadow-sm mt-2">
+                    Log In
+                </button>
+            </form>
+
+            <div class="mt-6 text-center text-xs text-slate-400 font-mono">
+                Default Admin: admin / admin123
+            </div>
+
         </div>
-
-        <!-- Inline Error Banner -->
-        <div id="errorMessage" class="hidden bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4 border border-red-200 text-center"></div>
-
-        <!-- Login Form -->
-        <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
-            <div>
-                <label for="username" class="block text-xs font-semibold text-slate-600 uppercase mb-1">Username</label>
-                <input
-                    type="text"
-                    id="username"
-                    placeholder="Enter your username"
-                    class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-                    required
-                >
-            </div>
-
-            <div>
-                <label for="password" class="block text-xs font-semibold text-slate-600 uppercase mb-1">Password</label>
-                <input
-                    type="password"
-                    id="password"
-                    placeholder="Enter your password"
-                    class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-                    required
-                >
-            </div>
-
-            <button
-                type="submit"
-                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg text-sm transition duration-150 shadow-sm"
-            >
-                Log In
-            </button>
-        </form>
     </div>
 
-    <!-- Frontend Logic Script -->
+    <!-- Script Logic -->
     <script>
-        // Redirect to dashboard immediately if token is already present
+        // Redirect if already logged in with a valid token
         if (localStorage.getItem("token")) {
             window.location.href = "/";
         }
 
         async function handleLogin(e) {
             e.preventDefault();
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value;
+            const errorBanner = document.getElementById("errorBanner");
+            const submitBtn = document.getElementById("submitBtn");
 
-            const errorDiv = document.getElementById("errorMessage");
-            errorDiv.classList.add("hidden");
-            errorDiv.innerText = "";
+            errorBanner.classList.add("hidden");
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Signing in...";
 
-            const usernameInput = document.getElementById("username").value.trim();
-            const passwordInput = document.getElementById("password").value;
-
-            // Format as x-www-form-urlencoded required by FastAPI OAuth2PasswordRequestForm
+            // FastAPI OAuth2PasswordRequestForm expects form-urlencoded data
             const formData = new URLSearchParams();
-            formData.append("username", usernameInput);
-            formData.append("password", passwordInput);
+            formData.append("username", username);
+            formData.append("password", password);
 
             try {
                 const response = await fetch("/token", {
@@ -82,19 +81,29 @@
                     body: formData
                 });
 
-                const data = await response.json();
+                const contentType = response.headers.get("content-type");
+                let data = {};
 
-                if (!response.ok) {
-                    throw new Error(data.detail || "Invalid username or password.");
+                if (contentType && contentType.includes("application/json")) {
+                    data = await response.json();
+                } else {
+                    const textData = await response.text();
+                    throw new Error(textData || "Server error occurred during login.");
                 }
 
-                // Store access token locally and redirect to workspace
+                if (!response.ok) {
+                    throw new Error(data.detail || "Incorrect username or password.");
+                }
+
+                // Store token and redirect to main workspace dashboard
                 localStorage.setItem("token", data.access_token);
                 window.location.href = "/";
 
             } catch (err) {
-                errorDiv.innerText = err.message;
-                errorDiv.classList.remove("hidden");
+                errorBanner.innerText = err.message || "Failed to connect to authentication server.";
+                errorBanner.classList.remove("hidden");
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Log In";
             }
         }
     </script>
