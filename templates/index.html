@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Workspace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen">
+
+    <!-- Header -->
+    <nav class="p-6 flex justify-between items-center max-w-7xl mx-auto">
+        <h1 class="text-2xl font-bold text-slate-800">Team Workspace</h1>
+        <button onclick="logout()" class="text-red-500 font-medium hover:underline">Log Out</button>
+    </nav>
+
+    <!-- Workspace Grid -->
+    <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-6 pb-12">
+
+        <!-- Left: Forms and Table -->
+        <div class="lg:col-span-2 space-y-6">
+
+            <!-- Admin-Only Add Teammate Card -->
+            <div id="addTeammateCard" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hidden">
+                <h2 class="text-lg font-semibold text-slate-800 mb-4">Add Teammate</h2>
+                <form id="userForm" onsubmit="handleAddUser(event)" class="flex gap-3">
+                    <input type="text" id="newUsername" placeholder="Username" class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-blue-500" required>
+                    <input type="password" id="newPassword" placeholder="Password" class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-blue-500" required>
+                    <select id="newRole" class="border rounded-lg px-3 py-2 text-sm">
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700">Add User</button>
+                </form>
+            </div>
+
+            <!-- Add Project Form -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-lg font-semibold text-slate-800 mb-4">Add Record</h2>
+                <form id="recordForm" onsubmit="handleAddRecord(event)" class="flex gap-3">
+                    <input type="text" id="projName" placeholder="Project Name" class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-blue-500" required>
+                    <select id="projStatus" class="border rounded-lg px-3 py-2 text-sm">
+                        <option value="Planning">Planning</option>
+                        <option value="Active">Active</option>
+                        <option value="Completed">Completed</option>
+                    </select>
+                    <input type="number" step="0.01" id="projBudget" placeholder="Budget" class="w-32 border rounded-lg px-3 py-2 text-sm focus:outline-blue-500" required>
+                    <button type="submit" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700">Save</button>
+                </form>
+            </div>
+
+            <!-- Database Projects Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <table class="w-full text-left text-sm text-slate-600">
+                    <thead class="bg-slate-50 text-slate-700 border-b">
+                        <tr>
+                            <th class="p-4">ID</th>
+                            <th class="p-4">Project Name</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4">Budget</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr><td colspan="4" class="p-4 text-center text-slate-400">Loading records...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Right: AI Conversational Chatbot -->
+        <div class="bg-indigo-900 text-white p-6 rounded-2xl shadow-lg flex flex-col justify-between h-[620px]">
+            <div>
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="text-xl">✨</span>
+                    <h2 class="text-lg font-bold">AI Conversational Assistant</h2>
+                </div>
+
+                <div id="chatBox" class="space-y-4 overflow-y-auto max-h-[470px] pr-2">
+                    <div class="bg-indigo-800/60 p-3 rounded-lg text-xs text-indigo-200">
+                        Hello! Ask me questions or issue actions like:<br>
+                        • <i>"How many users do we have?"</i><br>
+                        • <i>"Create project Titan with budget 85000"</i><br>
+                        • <i>"Add user Alex with password pass123 as admin"</i>
+                    </div>
+                </div>
+            </div>
+
+            <form id="chatForm" onsubmit="handleChatSubmit(event)" class="mt-4 flex gap-2">
+                <input type="text" id="chatInput" placeholder="Ask or command AI..." class="flex-1 bg-white text-slate-800 px-3 py-2 rounded-lg text-sm focus:outline-none" required>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg text-sm font-medium">Send</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script Logic -->
+    <script>
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            window.location.href = "/login";
+        }
+
+        function logout() {
+            localStorage.removeItem("token");
+            window.location.href = "/login";
+        }
+
+        async function checkUserProfile() {
+            try {
+                const res = await fetch("/api/me", { headers: { "Authorization": `Bearer ${token}` } });
+                if (!res.ok) throw new Error("Unauthorized");
+                const user = await res.json();
+                if (user.role === "admin") {
+                    document.getElementById("addTeammateCard").classList.remove("hidden");
+                }
+            } catch (err) {
+                logout();
+            }
+        }
+
+        async function fetchProjects() {
+            try {
+                const res = await fetch("/api/projects", { headers: { "Authorization": `Bearer ${token}` } });
+                if (!res.ok) throw new Error("Failed to load records");
+                const projects = await res.json();
+                const tbody = document.getElementById("tableBody");
+
+                if (projects.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">No records found. Use the form above to add data.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = projects.map(p => `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50">
+                        <td class="p-4 font-mono text-xs text-slate-500">${p.id}</td>
+                        <td class="p-4 font-medium text-slate-800">${p.name}</td>
+                        <td class="p-4">
+                            <span class="px-2 py-1 rounded-full text-xs font-semibold ${p.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}">
+                                ${p.status}
+                            </span>
+                        </td>
+                        <td class="p-4 font-mono text-slate-700">$${p.budget.toLocaleString()}</td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function handleAddRecord(e) {
+            e.preventDefault();
+            const name = document.getElementById("projName").value;
+            const status = document.getElementById("projStatus").value;
+            const budget = parseFloat(document.getElementById("projBudget").value);
+
+            try {
+                const res = await fetch("/api/projects", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                    body: JSON.stringify({ name, status, budget })
+                });
+
+                if (!res.ok) throw new Error("Failed to create project");
+                document.getElementById("recordForm").reset();
+                fetchProjects();
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            }
+        }
+
+        async function handleAddUser(e) {
+            e.preventDefault();
+            const username = document.getElementById("newUsername").value;
+            const password = document.getElementById("newPassword").value;
+            const role = document.getElementById("newRole").value;
+
+            try {
+                const res = await fetch("/api/users", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                    body: JSON.stringify({ username, password, role })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || "Failed to add user");
+
+                alert(`Teammate '${data.username}' added successfully!`);
+                document.getElementById("userForm").reset();
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            }
+        }
+
+        // Conversational AI Chat Handling
+        async function handleChatSubmit(e) {
+            e.preventDefault();
+            const input = document.getElementById("chatInput");
+            const chatBox = document.getElementById("chatBox");
+            const prompt = input.value.trim();
+
+            if (!prompt) return;
+
+            // Render User Message
+            chatBox.innerHTML += `
+                <div class="flex justify-end">
+                    <div class="bg-blue-600 text-white p-3 rounded-lg text-xs max-w-[85%]">${prompt}</div>
+                </div>
+            `;
+            input.value = "";
+
+            try {
+                const res = await fetch("/api/query", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || "Query execution failed");
+
+                // If a project was created via chat, refresh table automatically
+                if (data.refresh_table) {
+                    fetchProjects();
+                }
+
+                // Render Conversational Answer + Collapsible SQL snippet
+                let sqlSnippet = data.sql ? `<div class="text-[10px] text-indigo-300 font-mono mt-2 border-t border-indigo-700/50 pt-1">Executed SQL: ${data.sql}</div>` : '';
+
+                chatBox.innerHTML += `
+                    <div class="bg-indigo-800/80 p-3 rounded-lg text-xs text-indigo-100 border border-indigo-700 space-y-1">
+                        <div>${data.reply.replace(/\n/g, '<br>')}</div>
+                        ${sqlSnippet}
+                    </div>
+                `;
+            } catch (err) {
+                chatBox.innerHTML += `
+                    <div class="bg-red-900/60 text-red-200 p-3 rounded-lg text-xs">Error: ${err.message}</div>
+                `;
+            }
+
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        checkUserProfile();
+        fetchProjects();
+    </script>
+</body>
+</html>
